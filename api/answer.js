@@ -1,4 +1,5 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
+    // Allow only POST requests
     if (req.method !== "POST") {
         return res.status(405).json({
             error: "Method not allowed"
@@ -6,7 +7,8 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { question } = req.body || {};
+        const body = req.body || {};
+        const question = body.question;
 
         if (!question || typeof question !== "string") {
             return res.status(400).json({
@@ -32,29 +34,32 @@ export default async function handler(req, res) {
             });
         }
 
-        const response = await fetch(
+        const geminiResponse = await fetch(
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
             {
                 method: "POST",
+
                 headers: {
                     "Content-Type": "application/json",
                     "x-goog-api-key": apiKey
                 },
+
                 body: JSON.stringify({
                     contents: [
                         {
+                            role: "user",
                             parts: [
                                 {
-                                    text: `Answer this question accurately.
-
-Question:
-${cleanQuestion}
-
-Instructions:
-- Give the correct answer first.
-- Keep the answer clear and concise.
-- If necessary, provide a short explanation.
-- Do not invent information.`
+                                    text:
+                                        "Answer the following question accurately.\n\n" +
+                                        "Question:\n" +
+                                        cleanQuestion +
+                                        "\n\n" +
+                                        "Instructions:\n" +
+                                        "- Give the correct answer first.\n" +
+                                        "- Keep the answer clear and concise.\n" +
+                                        "- Give a short explanation when useful.\n" +
+                                        "- Do not invent information."
                                 }
                             ]
                         }
@@ -63,22 +68,30 @@ Instructions:
             }
         );
 
-        const data = await response.json();
+        const data = await geminiResponse.json();
 
-        if (!response.ok) {
+        if (!geminiResponse.ok) {
             console.error("Gemini API error:", data);
 
-            return res.status(response.status).json({
+            return res.status(502).json({
                 error: "Gemini could not answer the question."
             });
         }
 
         const answer =
-            data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            data &&
+            data.candidates &&
+            data.candidates[0] &&
+            data.candidates[0].content &&
+            data.candidates[0].content.parts &&
+            data.candidates[0].content.parts[0] &&
+            data.candidates[0].content.parts[0].text;
 
         if (!answer) {
-            return res.status(500).json({
-                error: "No answer was returned by Gemini."
+            console.error("Unexpected Gemini response:", data);
+
+            return res.status(502).json({
+                error: "Gemini returned no answer."
             });
         }
 
@@ -94,4 +107,4 @@ Instructions:
             error: "Unable to generate an answer."
         });
     }
-}
+};
