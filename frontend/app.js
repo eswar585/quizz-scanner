@@ -20,17 +20,34 @@ resourcesBtn.addEventListener("click", () => {
 });
 
 photoBtn.addEventListener("click", () => {
-    alert("Question scanning will be connected in the next stage.");
+    alert("Question scanning will be connected next.");
 });
 
 scanBtn.addEventListener("click", () => {
-    alert("Live screen scanning will be connected in the next stage.");
+    alert("Live scanning will be connected next.");
+});
+
+fileInput.addEventListener("change", () => {
+    const files = Array.from(fileInput.files || []);
+
+    if (files.length === 0) {
+        return;
+    }
+
+    alert(
+        `${files.length} resource${files.length === 1 ? "" : "s"} selected. ` +
+        "Resource processing will be connected next."
+    );
 });
 
 answerBtn.addEventListener("click", getAnswer);
 
 questionInput.addEventListener("keydown", (event) => {
-    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key === "Enter"
+    ) {
+        event.preventDefault();
         getAnswer();
     }
 });
@@ -41,6 +58,8 @@ async function getAnswer() {
     if (!question) {
         answerStatus.textContent = "Enter a question";
         answerContent.textContent = "Please type a question first.";
+        sourceContent.textContent = "";
+        responseTime.textContent = "";
         return;
     }
 
@@ -53,44 +72,59 @@ async function getAnswer() {
     responseTime.textContent = "";
 
     try {
-        /*
-         * IMPORTANT:
-         * This endpoint will be provided by our secure backend.
-         * Never put an OpenAI API key in this file.
-         */
-
         const response = await fetch("/api/answer", {
             method: "POST",
+
             headers: {
                 "Content-Type": "application/json"
             },
+
             body: JSON.stringify({
-                question
+                question: question
             })
         });
 
-        if (!response.ok) {
-            throw new Error("Unable to get an answer.");
+        let data;
+
+        try {
+            data = await response.json();
+        } catch {
+            throw new Error(
+                `Server returned ${response.status} instead of JSON.`
+            );
         }
 
-        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(
+                data.error ||
+                `Server error: ${response.status}`
+            );
+        }
 
-        const elapsed = ((performance.now() - startTime) / 1000).toFixed(2);
+        const elapsed =
+            ((performance.now() - startTime) / 1000).toFixed(2);
 
         answerStatus.textContent = "Answer";
-        answerContent.textContent = data.answer || "No answer returned.";
+        answerContent.textContent =
+            data.answer || "No answer returned.";
+
         responseTime.textContent = `${elapsed}s`;
 
         if (data.source) {
-            sourceContent.textContent = `Source: ${data.source}`;
+            sourceContent.textContent =
+                `Source: ${data.source}`;
         }
 
     } catch (error) {
-        console.error(error);
+        console.error("Answer request failed:", error);
 
-        answerStatus.textContent = "Something went wrong";
+        answerStatus.textContent = "Unable to answer";
         answerContent.textContent =
-            "We couldn't get the answer. Please try again.";
+            error.message ||
+            "Something went wrong. Please try again.";
+
+        sourceContent.textContent = "";
+        responseTime.textContent = "";
     } finally {
         answerBtn.disabled = false;
     }
