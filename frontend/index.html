@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizz Scanner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="header">
+    <div class="logo">
+        <span class="logo-mark">Q</span>
+        <span>Quizz Scanner</span>
+    </div>
+
+    <button class="resources-btn" id="resourcesBtn">
+        Resources
+    </button>
+</header>
+
+<main class="container">
+
+    <section class="hero">
+        <p class="eyebrow">AI QUESTION SOLVER</p>
+
+        <h1>
+            Ask a question.<br>
+            <span>Get the answer.</span>
+        </h1>
+
+        <p class="subtitle">
+            Type or scan a question and get a clear answer using your
+            uploaded resources or the internet.
+        </p>
+    </section>
+
+    <section class="mode-grid">
+
+        <button class="mode-card upload-card" id="uploadBtn">
+            <div class="mode-icon">↑</div>
+
+            <div>
+                <h2>Upload Resources</h2>
+                <p>
+                    PDF, Word, PowerPoint, photo or video
+                </p>
+            </div>
+
+            <span class="arrow">→</span>
+        </button>
+
+        <button class="mode-card scan-card" id="scanBtn">
+            <div class="mode-icon scan-icon">●</div>
+
+            <div>
+                <h2>Live Scan</h2>
+                <p>
+                    Automatically scan questions from your screen
+                </p>
+            </div>
+
+            <span class="arrow">→</span>
+        </button>
+
+    </section>
+
+    <section class="question-section">
+
+        <div class="section-label">
+            <span>YOUR QUESTION</span>
+        </div>
+
+        <div class="question-box">
+
+            <textarea
+                id="questionInput"
+                placeholder="Type your question here..."
+                rows="4"
+            ></textarea>
+
+            <div class="question-actions">
+
+                <button class="scan-question-btn" id="photoBtn">
+                    📷 Scan
+                </button>
+
+                <button class="answer-btn" id="answerBtn">
+                    <span>Get Answer</span>
+                    <span>⚡</span>
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <section class="answer-section" id="answerSection">
+
+        <div class="answer-header">
+            <span>ANSWER</span>
+            <span id="responseTime"></span>
+        </div>
+
+        <div class="answer-card">
+
+            <div id="answerStatus" class="answer-status">
+                Ready
+            </div>
+
+            <div id="answerContent" class="answer-content">
+                Your answer will appear here.
+            </div>
+
+            <div id="sourceContent" class="source-content"></div>
+
+        </div>
+
+    </section>
+
+</main>
+
+<input
+    type="file"
+    id="fileInput"
+    hidden
+    multiple
+    accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.mp4,.mov,.avi"
+/>
+
+<script src="app.js"></script>
+
+</body>
+</html>
