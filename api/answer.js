@@ -1,5 +1,4 @@
 export default async function handler(req, res) {
-    // Only allow POST requests
     if (req.method !== "POST") {
         return res.status(405).json({
             error: "Method not allowed"
@@ -9,7 +8,6 @@ export default async function handler(req, res) {
     try {
         const { question } = req.body || {};
 
-        // Validate question
         if (!question || typeof question !== "string") {
             return res.status(400).json({
                 error: "Question is required."
@@ -24,35 +22,30 @@ export default async function handler(req, res) {
             });
         }
 
-        // Make sure the API key exists on the server
-        const apiKey = process.env.OPENAI_API_KEY;
+        const apiKey = process.env.GEMINI_API_KEY;
 
         if (!apiKey) {
-            console.error("OPENAI_API_KEY is not configured.");
+            console.error("GEMINI_API_KEY is missing.");
 
             return res.status(500).json({
-                error: "Server API configuration is missing."
+                error: "Gemini API key is not configured."
             });
         }
 
-        // Call OpenAI Responses API
-        const openAIResponse = await fetch(
-            "https://api.openai.com/v1/responses",
+        const response = await fetch(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
+                    "x-goog-api-key": apiKey
                 },
                 body: JSON.stringify({
-                    model: "gpt-5.5",
-                    input: [
+                    contents: [
                         {
-                            role: "user",
-                            content: [
+                            parts: [
                                 {
-                                    type: "input_text",
-                                    text: `Answer the following question accurately.
+                                    text: `Answer this question accurately.
 
 Question:
 ${cleanQuestion}
@@ -60,7 +53,7 @@ ${cleanQuestion}
 Instructions:
 - Give the correct answer first.
 - Keep the answer clear and concise.
-- If explanation is useful, provide a short explanation.
+- If necessary, provide a short explanation.
 - Do not invent information.`
                                 }
                             ]
@@ -70,28 +63,28 @@ Instructions:
             }
         );
 
-        const data = await openAIResponse.json();
+        const data = await response.json();
 
-        if (!openAIResponse.ok) {
-            console.error("OpenAI API error:", data);
+        if (!response.ok) {
+            console.error("Gemini API error:", data);
 
-            return res.status(openAIResponse.status).json({
-                error: "AI service could not answer the question."
+            return res.status(response.status).json({
+                error: "Gemini could not answer the question."
             });
         }
 
-        // Extract the generated text
-        const answer = data.output_text;
+        const answer =
+            data?.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!answer) {
             return res.status(500).json({
-                error: "No answer was returned."
+                error: "No answer was returned by Gemini."
             });
         }
 
         return res.status(200).json({
             answer: answer,
-            source: "Internet / AI"
+            source: "Gemini AI"
         });
 
     } catch (error) {
